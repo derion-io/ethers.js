@@ -20,6 +20,7 @@ var Formatter = /** @class */ (function () {
         var _this = this;
         var formats = ({});
         var address = this.address.bind(this);
+        var filterAddress = this.filterAddress.bind(this);
         var bigNumber = this.bigNumber.bind(this);
         var blockTag = this.blockTag.bind(this);
         var data = this.data.bind(this);
@@ -105,7 +106,7 @@ var Formatter = /** @class */ (function () {
             fromBlock: Formatter.allowNull(blockTag, undefined),
             toBlock: Formatter.allowNull(blockTag, undefined),
             blockHash: Formatter.allowNull(hash, undefined),
-            address: Formatter.allowNull(address, undefined),
+            address: Formatter.allowNull(filterAddress, undefined),
             topics: Formatter.allowNull(this.topics.bind(this), undefined),
         };
         formats.filterLog = {
@@ -173,6 +174,12 @@ var Formatter = /** @class */ (function () {
     // Requires an address
     // Strict! Used on input.
     Formatter.prototype.address = function (value) {
+        return address_1.getAddress(value);
+    };
+    Formatter.prototype.filterAddress = function (value) {
+        if (Array.isArray(value)) {
+            return value.map(address_1.getAddress);
+        }
         return address_1.getAddress(value);
     };
     Formatter.prototype.callAddress = function (value) {
