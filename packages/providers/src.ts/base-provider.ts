@@ -1252,7 +1252,7 @@ export class BaseProvider extends Provider implements EnsProvider {
 
         if (filter.address != null) {
             if (Array.isArray(filter.address)) {
-                result.adddress = Promise.all(
+                result.address = Promise.all(
                     filter.address.map(this._getAddress.bind(this))
                 )
             } else {
