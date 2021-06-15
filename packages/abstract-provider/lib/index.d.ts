@@ -74,7 +74,7 @@ export interface TransactionReceipt {
     status?: number;
 }
 export interface EventFilter {
-    address?: string;
+    address?: string | Array<string>;
     topics?: Array<string | Array<string> | null>;
 }
 export interface Filter extends EventFilter {

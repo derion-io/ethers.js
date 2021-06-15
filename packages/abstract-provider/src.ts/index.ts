@@ -113,7 +113,7 @@ export interface TransactionReceipt {
 };
 
 export interface EventFilter {
-    address?: string;
+    address?: string | Array<string>;
     topics?: Array<string | Array<string> | null>;
 }
 
