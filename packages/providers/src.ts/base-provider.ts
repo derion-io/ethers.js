@@ -1251,7 +1251,11 @@ export class BaseProvider extends Provider implements EnsProvider {
         const result: any = { };
 
         if (filter.address != null) {
-            result.address = this._getAddress(filter.address);
+            if (Array.isArray(filter.address)) {
+                result.address = filter.address.map(this._getAddress.bind(this));
+            } else {
+                result.address = this._getAddress(filter.address);
+            }
         }
 
         ["blockHash", "topics"].forEach((key) => {
