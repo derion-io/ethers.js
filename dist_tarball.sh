@@ -9,7 +9,6 @@ if [ -d "$TARBALL_DIR" ]; then
 fi
 
 mkdir -v "$TARBALL_DIR"
-mkdir -v "$TARBALL_DIR/lib"
 rsync -r \
     --exclude=dist \
     --exclude=*._esm \
@@ -17,7 +16,5 @@ rsync -r \
     --exclude=tests \
     --exclude=node_modules \
     --exclude=tmp \
-    packages/ "$TARBALL_DIR"
-cp packages/ethers/package.json "$TARBALL_DIR"
-cp ethers_index.js "$TARBALL_DIR/lib/index.js"
-tar -czvf ethers.tar.gz "$TARBALL_DIR"
+    packages/providers/* "$TARBALL_DIR"
+tar -czvf ethers_providers.tar.gz "$TARBALL_DIR"
