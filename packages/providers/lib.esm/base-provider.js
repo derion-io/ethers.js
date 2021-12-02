@@ -1100,7 +1100,12 @@ export class BaseProvider extends Provider {
             filter = yield filter;
             const result = {};
             if (filter.address != null) {
-                result.address = this._getAddress(filter.address);
+                if (Array.isArray(filter.address)) {
+                    result.address = Promise.all(filter.address.map(this._getAddress.bind(this)));
+                }
+                else {
+                    result.address = this._getAddress(filter.address);
+                }
             }
             ["blockHash", "topics"].forEach((key) => {
                 if (filter[key] == null) {
