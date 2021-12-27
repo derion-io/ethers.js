@@ -1,5 +1,6 @@
 {
   "name": "ethers",
+  "version": "1.0.0",
   "common": {
     "ethereum": "donations.ethers.eth",
     "funding": [
