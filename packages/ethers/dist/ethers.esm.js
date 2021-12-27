@@ -18151,6 +18151,7 @@ class Formatter {
     getDefaultFormats() {
         const formats = ({});
         const address = this.address.bind(this);
+        const filterAddress = this.filterAddress.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
@@ -18246,7 +18247,7 @@ class Formatter {
             fromBlock: Formatter.allowNull(blockTag, undefined),
             toBlock: Formatter.allowNull(blockTag, undefined),
             blockHash: Formatter.allowNull(hash, undefined),
-            address: Formatter.allowNull(address, undefined),
+            address: Formatter.allowNull(filterAddress, undefined),
             topics: Formatter.allowNull(this.topics.bind(this), undefined),
         };
         formats.filterLog = {
@@ -18320,6 +18321,12 @@ class Formatter {
     // Requires an address
     // Strict! Used on input.
     address(value) {
+        return getAddress(value);
+    }
+    filterAddress(value) {
+        if (Array.isArray(value)) {
+            return value.map(getAddress);
+        }
         return getAddress(value);
     }
     callAddress(value) {
@@ -19811,7 +19818,12 @@ class BaseProvider extends Provider {
             filter = yield filter;
             const result = {};
             if (filter.address != null) {
-                result.address = this._getAddress(filter.address);
+                if (Array.isArray(filter.address)) {
+                    result.address = Promise.all(filter.address.map(this._getAddress.bind(this)));
+                }
+                else {
+                    result.address = this._getAddress(filter.address);
+                }
             }
             ["blockHash", "topics"].forEach((key) => {
                 if (filter[key] == null) {
@@ -20734,7 +20746,12 @@ class JsonRpcProvider extends BaseProvider {
             }
             case "getLogs":
                 if (params.filter && params.filter.address != null) {
-                    params.filter.address = getLowerCase(params.filter.address);
+                    if (Array.isArray(params.filter.address)) {
+                        params.filter.address = params.filter.address.map(getLowerCase);
+                    }
+                    else {
+                        params.filter.address = getLowerCase(params.filter.address);
+                    }
                 }
                 return ["eth_getLogs", [params.filter]];
             default:

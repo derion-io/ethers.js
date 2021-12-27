@@ -616,7 +616,12 @@ var JsonRpcProvider = /** @class */ (function (_super) {
             }
             case "getLogs":
                 if (params.filter && params.filter.address != null) {
-                    params.filter.address = getLowerCase(params.filter.address);
+                    if (Array.isArray(params.filter.address)) {
+                        params.filter.address = params.filter.address.map(getLowerCase);
+                    }
+                    else {
+                        params.filter.address = getLowerCase(params.filter.address);
+                    }
                 }
                 return ["eth_getLogs", [params.filter]];
             default:
