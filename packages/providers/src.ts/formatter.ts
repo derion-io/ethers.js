@@ -39,6 +39,7 @@ export class Formatter {
         const formats: Formats = <Formats>({ });
 
         const address = this.address.bind(this);
+        const filterAddress = this.filterAddress.bind(this);
         const bigNumber = this.bigNumber.bind(this);
         const blockTag = this.blockTag.bind(this);
         const data = this.data.bind(this);
@@ -156,7 +157,7 @@ export class Formatter {
             fromBlock: Formatter.allowNull(blockTag, undefined),
             toBlock: Formatter.allowNull(blockTag, undefined),
             blockHash: Formatter.allowNull(hash, undefined),
-            address: Formatter.allowNull(address, undefined),
+            address: Formatter.allowNull(filterAddress, undefined),
             topics: Formatter.allowNull(this.topics.bind(this), undefined),
         };
 
@@ -232,6 +233,13 @@ export class Formatter {
     // Requires an address
     // Strict! Used on input.
     address(value: any): string {
+        return getAddress(value);
+    }
+
+    filterAddress(value: any): string | Array<string> {
+        if (Array.isArray(value)) {
+            return value.map(getAddress);
+        }
         return getAddress(value);
     }
 

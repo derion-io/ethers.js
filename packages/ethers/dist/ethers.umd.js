@@ -20292,6 +20292,7 @@
 	        var _this = this;
 	        var formats = ({});
 	        var address = this.address.bind(this);
+	        var filterAddress = this.filterAddress.bind(this);
 	        var bigNumber = this.bigNumber.bind(this);
 	        var blockTag = this.blockTag.bind(this);
 	        var data = this.data.bind(this);
@@ -20387,7 +20388,7 @@
 	            fromBlock: Formatter.allowNull(blockTag, undefined),
 	            toBlock: Formatter.allowNull(blockTag, undefined),
 	            blockHash: Formatter.allowNull(hash, undefined),
-	            address: Formatter.allowNull(address, undefined),
+	            address: Formatter.allowNull(filterAddress, undefined),
 	            topics: Formatter.allowNull(this.topics.bind(this), undefined),
 	        };
 	        formats.filterLog = {
@@ -20461,6 +20462,12 @@
 	    // Requires an address
 	    // Strict! Used on input.
 	    Formatter.prototype.address = function (value) {
+	        return (0, lib$6.getAddress)(value);
+	    };
+	    Formatter.prototype.filterAddress = function (value) {
+	        if (Array.isArray(value)) {
+	            return value.map(lib$6.getAddress);
+	        }
 	        return (0, lib$6.getAddress)(value);
 	    };
 	    Formatter.prototype.callAddress = function (value) {
@@ -22320,7 +22327,12 @@
 	                        filter = _c.sent();
 	                        result = {};
 	                        if (filter.address != null) {
-	                            result.address = this._getAddress(filter.address);
+	                            if (Array.isArray(filter.address)) {
+	                                result.address = Promise.all(filter.address.map(this._getAddress.bind(this)));
+	                            }
+	                            else {
+	                                result.address = this._getAddress(filter.address);
+	                            }
 	                        }
 	                        ["blockHash", "topics"].forEach(function (key) {
 	                            if (filter[key] == null) {
@@ -23610,7 +23622,12 @@
 	            }
 	            case "getLogs":
 	                if (params.filter && params.filter.address != null) {
-	                    params.filter.address = getLowerCase(params.filter.address);
+	                    if (Array.isArray(params.filter.address)) {
+	                        params.filter.address = params.filter.address.map(getLowerCase);
+	                    }
+	                    else {
+	                        params.filter.address = getLowerCase(params.filter.address);
+	                    }
 	                }
 	                return ["eth_getLogs", [params.filter]];
 	            default:

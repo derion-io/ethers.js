@@ -1590,7 +1590,12 @@ var BaseProvider = /** @class */ (function (_super) {
                         filter = _c.sent();
                         result = {};
                         if (filter.address != null) {
-                            result.address = this._getAddress(filter.address);
+                            if (Array.isArray(filter.address)) {
+                                result.address = Promise.all(filter.address.map(this._getAddress.bind(this)));
+                            }
+                            else {
+                                result.address = this._getAddress(filter.address);
+                            }
                         }
                         ["blockHash", "topics"].forEach(function (key) {
                             if (filter[key] == null) {
