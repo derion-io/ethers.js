@@ -18159,6 +18159,14 @@ class Formatter {
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
         const type = this.type.bind(this);
+        const mapHashHash = Formatter.mapOf(hash, hash);
+        const overrideAccount = {
+            nonce: Formatter.allowNull(number),
+            code: Formatter.allowNull(hex),
+            balance: Formatter.allowNull(bigNumber),
+            state: Formatter.allowNull(mapHashHash),
+            stateDiff: Formatter.allowNull(mapHashHash),
+        };
         const strictData = (v) => { return this.data(v, true); };
         formats.transaction = {
             hash: hash,
@@ -18198,6 +18206,7 @@ class Formatter {
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
+        formats.stateOverride = Formatter.mapOf(address, overrideAccount);
         formats.receiptLog = {
             transactionIndex: number,
             blockNumber: number,
@@ -18401,6 +18410,9 @@ class Formatter {
     transactionRequest(value) {
         return Formatter.check(this.formats.transactionRequest, value);
     }
+    stateOverride(value) {
+        return this.formats.stateOverride(value);
+    }
     transactionResponse(transaction) {
         // Rename gas to gasLimit
         if (transaction.gas != null && transaction.gasLimit == null) {
@@ -18554,6 +18566,33 @@ class Formatter {
             });
             return result;
         });
+    }
+    static mapOf(formatKey, formatValue) {
+        return function (map) {
+            if (typeof (map) !== 'object' || map === null) {
+                throw new Error('expect an object');
+            }
+            let result = {};
+            for (let key of Object.keys(map)) {
+                let validKey = formatKey(key);
+                if (validKey === null) {
+                    return null;
+                }
+                let validValue = Formatter.format(map[key], formatValue);
+                if (validValue === null) {
+                    return null;
+                }
+                result[validKey] = validValue;
+            }
+            return result;
+        };
+    }
+    static format(value, format) {
+        switch (typeof (format)) {
+            case 'function': return format(value);
+            case 'object': return Formatter.check(format, value);
+            default: throw new Error('expect FormatFunc or FormatFuncs');
+        }
     }
 }
 function isCommunityResourcable(value) {
@@ -19073,6 +19112,7 @@ class BaseProvider extends Provider {
         // Events being listened to
         this._events = [];
         this._emitted = { block: -2 };
+        this._stateOverride = null;
         this.formatter = new.target.getFormatter();
         // If network is any, this Provider allows the underlying
         // network to change dynamically, and we auto-detect the
@@ -19813,6 +19853,9 @@ class BaseProvider extends Provider {
             return this.formatter.transactionRequest(yield resolveProperties(tx));
         });
     }
+    _getStateOverride(state) {
+        return this.formatter.stateOverride(state);
+    }
     _getFilter(filter) {
         return __awaiter$9(this, void 0, void 0, function* () {
             filter = yield filter;
@@ -19845,7 +19888,8 @@ class BaseProvider extends Provider {
             yield this.getNetwork();
             const params = yield resolveProperties({
                 transaction: this._getTransactionRequest(transaction),
-                blockTag: this._getBlockTag(blockTag)
+                blockTag: this._getBlockTag(blockTag),
+                stateOverride: this._getStateOverride(this._stateOverride)
             });
             const result = yield this.perform("call", params);
             try {
@@ -19876,6 +19920,12 @@ class BaseProvider extends Provider {
                 });
             }
         });
+    }
+    setStateOverride(value) {
+        this._stateOverride = value;
+    }
+    getStateOverride() {
+        return this._stateOverride;
     }
     _getAddress(addressOrName) {
         return __awaiter$9(this, void 0, void 0, function* () {
@@ -20738,7 +20788,14 @@ class JsonRpcProvider extends BaseProvider {
                 return ["eth_getTransactionReceipt", [params.transactionHash]];
             case "call": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");
-                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                return [
+                    "eth_call",
+                    [
+                        hexlifyTransaction(params.transaction, { from: true }),
+                        params.blockTag,
+                        params.stateOverride
+                    ]
+                ];
             }
             case "estimateGas": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");

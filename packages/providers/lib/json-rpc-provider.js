@@ -608,7 +608,17 @@ var JsonRpcProvider = /** @class */ (function (_super) {
                 return ["eth_getTransactionReceipt", [params.transactionHash]];
             case "call": {
                 var hexlifyTransaction = (0, properties_1.getStatic)(this.constructor, "hexlifyTransaction");
-                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                if (!params.stateOverride) {
+                    return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                }
+                return [
+                    "eth_call",
+                    [
+                        hexlifyTransaction(params.transaction, { from: true }),
+                        params.blockTag,
+                        JsonRpcProvider.hexlifyStateOverride(params.stateOverride)
+                    ]
+                ];
             }
             case "estimateGas": {
                 var hexlifyTransaction = (0, properties_1.getStatic)(this.constructor, "hexlifyTransaction");
@@ -760,6 +770,36 @@ var JsonRpcProvider = /** @class */ (function (_super) {
         if (transaction.accessList) {
             result["accessList"] = (0, transactions_1.accessListify)(transaction.accessList);
         }
+        return result;
+    };
+    JsonRpcProvider.hexlifyStateOverride = function (state) {
+        var result = {};
+        for (var _i = 0, _a = Object.keys(state); _i < _a.length; _i++) {
+            var address = _a[_i];
+            result[address] = JsonRpcProvider.hexlifyOverrideAccount(state[address]);
+        }
+        return result;
+    };
+    JsonRpcProvider.hexlifyOverrideAccount = function (account) {
+        var result = {};
+        ['nonce', 'balance'].forEach(function (key) {
+            if (account[key] === null) {
+                return;
+            }
+            result[key] = (0, bytes_1.hexValue)(account[key]);
+        });
+        ['code'].forEach(function (key) {
+            if (account[key] === null) {
+                return;
+            }
+            result[key] = (0, bytes_1.hexlify)(account[key]);
+        });
+        ['state', 'stateDiff'].forEach(function (key) {
+            if (account[key] === null) {
+                return;
+            }
+            result[key] = account[key];
+        });
         return result;
     };
     return JsonRpcProvider;

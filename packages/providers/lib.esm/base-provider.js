@@ -503,6 +503,7 @@ export class BaseProvider extends Provider {
         // Events being listened to
         this._events = [];
         this._emitted = { block: -2 };
+        this._stateOverride = null;
         this.formatter = new.target.getFormatter();
         // If network is any, this Provider allows the underlying
         // network to change dynamically, and we auto-detect the
@@ -1243,6 +1244,9 @@ export class BaseProvider extends Provider {
             return this.formatter.transactionRequest(yield resolveProperties(tx));
         });
     }
+    _getStateOverride(state) {
+        return this.formatter.stateOverride(state);
+    }
     _getFilter(filter) {
         return __awaiter(this, void 0, void 0, function* () {
             filter = yield filter;
@@ -1275,7 +1279,8 @@ export class BaseProvider extends Provider {
             yield this.getNetwork();
             const params = yield resolveProperties({
                 transaction: this._getTransactionRequest(transaction),
-                blockTag: this._getBlockTag(blockTag)
+                blockTag: this._getBlockTag(blockTag),
+                stateOverride: this._getStateOverride(this._stateOverride)
             });
             const result = yield this.perform("call", params);
             try {
@@ -1306,6 +1311,12 @@ export class BaseProvider extends Provider {
                 });
             }
         });
+    }
+    setStateOverride(value) {
+        this._stateOverride = value;
+    }
+    getStateOverride() {
+        return this._stateOverride;
     }
     _getAddress(addressOrName) {
         return __awaiter(this, void 0, void 0, function* () {

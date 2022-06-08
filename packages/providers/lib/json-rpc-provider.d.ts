@@ -5,7 +5,7 @@ import { Network, Networkish } from "@ethersproject/networks";
 import { Deferrable } from "@ethersproject/properties";
 import { AccessList } from "@ethersproject/transactions";
 import { ConnectionInfo } from "@ethersproject/web";
-import { BaseProvider, Event } from "./base-provider";
+import { BaseProvider, Event, StateOverride, OverrideAccount } from "./base-provider";
 export declare class JsonRpcSigner extends Signer implements TypedDataSigner {
     readonly provider: JsonRpcProvider;
     _index: number;
@@ -49,6 +49,8 @@ export declare class JsonRpcProvider extends BaseProvider {
     }): {
         [key: string]: string | AccessList;
     };
+    static hexlifyStateOverride(state: StateOverride): any;
+    static hexlifyOverrideAccount(account: OverrideAccount): any;
 }
 export {};
 //# sourceMappingURL=json-rpc-provider.d.ts.map

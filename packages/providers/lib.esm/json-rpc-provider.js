@@ -444,7 +444,14 @@ export class JsonRpcProvider extends BaseProvider {
                 return ["eth_getTransactionReceipt", [params.transactionHash]];
             case "call": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");
-                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                return [
+                    "eth_call",
+                    [
+                        hexlifyTransaction(params.transaction, { from: true }),
+                        params.blockTag,
+                        params.stateOverride
+                    ]
+                ];
             }
             case "estimateGas": {
                 const hexlifyTransaction = getStatic(this.constructor, "hexlifyTransaction");
