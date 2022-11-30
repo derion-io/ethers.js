@@ -1405,6 +1405,7 @@ export class BaseProvider extends Provider implements EnsProvider {
     }
 
     _getStateOverride(state: StateOverride) {
+        if (state == null) return {}
         return this.formatter.stateOverride(state)
     }
 

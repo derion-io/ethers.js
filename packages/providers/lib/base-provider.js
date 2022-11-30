@@ -1581,6 +1581,7 @@ var BaseProvider = /** @class */ (function (_super) {
         });
     };
     BaseProvider.prototype._getStateOverride = function (state) {
+        if (state == null) return {}
         return this.formatter.stateOverride(state);
     };
     BaseProvider.prototype._getFilter = function (filter) {

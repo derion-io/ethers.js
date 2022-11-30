@@ -1245,6 +1245,7 @@ export class BaseProvider extends Provider {
         });
     }
     _getStateOverride(state) {
+        if (state == null) return {}
         return this.formatter.stateOverride(state);
     }
     _getFilter(filter) {
