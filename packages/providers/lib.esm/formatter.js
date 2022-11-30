@@ -24,6 +24,14 @@ export class Formatter {
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
         const type = this.type.bind(this);
+        const mapHashHash = Formatter.mapOf(hash, hash);
+        const overrideAccount = {
+            nonce: Formatter.allowNull(number),
+            code: Formatter.allowNull(hex),
+            balance: Formatter.allowNull(bigNumber),
+            state: Formatter.allowNull(mapHashHash),
+            stateDiff: Formatter.allowNull(mapHashHash),
+        };
         const strictData = (v) => { return this.data(v, true); };
         formats.transaction = {
             hash: hash,
@@ -63,6 +71,7 @@ export class Formatter {
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
+        formats.stateOverride = Formatter.mapOf(address, overrideAccount);
         formats.receiptLog = {
             transactionIndex: number,
             blockNumber: number,
@@ -266,6 +275,9 @@ export class Formatter {
     transactionRequest(value) {
         return Formatter.check(this.formats.transactionRequest, value);
     }
+    stateOverride(value) {
+        return this.formats.stateOverride(value);
+    }
     transactionResponse(transaction) {
         // Rename gas to gasLimit
         if (transaction.gas != null && transaction.gasLimit == null) {
@@ -419,6 +431,33 @@ export class Formatter {
             });
             return result;
         });
+    }
+    static mapOf(formatKey, formatValue) {
+        return function (map) {
+            if (typeof (map) !== 'object' || map === null) {
+                throw new Error('expect an object');
+            }
+            let result = {};
+            for (let key of Object.keys(map)) {
+                let validKey = formatKey(key);
+                if (validKey === null) {
+                    return null;
+                }
+                let validValue = Formatter.format(map[key], formatValue);
+                if (validValue === null) {
+                    return null;
+                }
+                result[validKey] = validValue;
+            }
+            return result;
+        };
+    }
+    static format(value, format) {
+        switch (typeof (format)) {
+            case 'function': return format(value);
+            case 'object': return Formatter.check(format, value);
+            default: throw new Error('expect FormatFunc or FormatFuncs');
+        }
     }
 }
 export function isCommunityResourcable(value) {

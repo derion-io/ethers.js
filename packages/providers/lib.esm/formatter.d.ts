@@ -14,6 +14,7 @@ export declare type Formats = {
     blockWithTransactions: FormatFuncs;
     filter: FormatFuncs;
     filterLog: FormatFuncs;
+    stateOverride: FormatFunc;
 };
 export declare class Formatter {
     readonly formats: Formats;
@@ -38,6 +39,7 @@ export declare class Formatter {
     block(value: any): Block;
     blockWithTransactions(value: any): Block;
     transactionRequest(value: any): any;
+    stateOverride(value: any): any;
     transactionResponse(transaction: any): TransactionResponse;
     transaction(value: any): any;
     receiptLog(value: any): any;
@@ -51,6 +53,8 @@ export declare class Formatter {
     static allowNull(format: FormatFunc, nullValue?: any): FormatFunc;
     static allowFalsish(format: FormatFunc, replaceValue: any): FormatFunc;
     static arrayOf(format: FormatFunc): FormatFunc;
+    static mapOf(formatKey: FormatFunc, formatValue: FormatFunc | FormatFuncs): FormatFunc;
+    static format(value: any, format: FormatFunc | FormatFuncs): any;
 }
 export interface CommunityResourcable {
     isCommunityResource(): boolean;

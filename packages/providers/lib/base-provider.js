@@ -632,6 +632,7 @@ var BaseProvider = /** @class */ (function (_super) {
         // Events being listened to
         _this._events = [];
         _this._emitted = { block: -2 };
+        _this._stateOverride = null;
         _this.formatter = _newTarget.getFormatter();
         // If network is any, this Provider allows the underlying
         // network to change dynamically, and we auto-detect the
@@ -1579,6 +1580,10 @@ var BaseProvider = /** @class */ (function (_super) {
             });
         });
     };
+    BaseProvider.prototype._getStateOverride = function (state) {
+        if (state == null) return {}
+        return this.formatter.stateOverride(state);
+    };
     BaseProvider.prototype._getFilter = function (filter) {
         return __awaiter(this, void 0, void 0, function () {
             var result, _a, _b;
@@ -1626,7 +1631,8 @@ var BaseProvider = /** @class */ (function (_super) {
                         _a.sent();
                         return [4 /*yield*/, (0, properties_1.resolveProperties)({
                                 transaction: this._getTransactionRequest(transaction),
-                                blockTag: this._getBlockTag(blockTag)
+                                blockTag: this._getBlockTag(blockTag),
+                                stateOverride: this._stateOverride
                             })];
                     case 2:
                         params = _a.sent();
@@ -1658,7 +1664,8 @@ var BaseProvider = /** @class */ (function (_super) {
                     case 1:
                         _a.sent();
                         return [4 /*yield*/, (0, properties_1.resolveProperties)({
-                                transaction: this._getTransactionRequest(transaction)
+                                transaction: this._getTransactionRequest(transaction),
+                                stateOverride: this._stateOverride
                             })];
                     case 2:
                         params = _a.sent();
@@ -1680,6 +1687,17 @@ var BaseProvider = /** @class */ (function (_super) {
                 }
             });
         });
+    };
+    BaseProvider.prototype.setStateOverride = function (value) {
+        if (value === void 0) { value = null; }
+        if (value === null) {
+            this._stateOverride = null;
+            return;
+        }
+        this._stateOverride = this.formatter.stateOverride(value);
+    };
+    BaseProvider.prototype.getStateOverride = function () {
+        return this._stateOverride;
     };
     BaseProvider.prototype._getAddress = function (addressOrName) {
         return __awaiter(this, void 0, void 0, function () {

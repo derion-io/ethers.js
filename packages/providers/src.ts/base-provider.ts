@@ -6,7 +6,7 @@ import {
 } from "@ethersproject/abstract-provider";
 import { Base58 } from "@ethersproject/basex";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
-import { arrayify, concat, hexConcat, hexDataLength, hexDataSlice, hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
+import { BytesLike, arrayify, concat, hexConcat, hexDataLength, hexDataSlice, hexlify, hexValue, hexZeroPad, isHexString } from "@ethersproject/bytes";
 import { HashZero } from "@ethersproject/constants";
 import { namehash } from "@ethersproject/hash";
 import { getNetwork, Network, Networkish } from "@ethersproject/networks";
@@ -23,6 +23,17 @@ import { version } from "./_version";
 const logger = new Logger(version);
 
 import { Formatter } from "./formatter";
+
+export type OverrideAccount = {
+    nonce?: string
+    code?: BytesLike
+    balance?: BigNumberish
+    state?: {[key: string]: string}         // key and value is heximal 32 bytes
+    stateDiff?: {[key: string]: string}     // key and value is heximal 32 bytes
+}
+
+// key is heximal 20 bytes
+export type StateOverride = {[key: string]: StateOverride}
 
 //////////////////////////////
 // Event Serializeing
@@ -569,6 +580,7 @@ let nextPollId = 1;
 export class BaseProvider extends Provider implements EnsProvider {
     _networkPromise: Promise<Network>;
     _network: Network;
+    _stateOverride: StateOverride
 
     _events: Array<Event>;
 
@@ -621,6 +633,7 @@ export class BaseProvider extends Provider implements EnsProvider {
         this._events = [];
 
         this._emitted = { block: -2 };
+        this._stateOverride = null
 
         this.formatter = new.target.getFormatter();
 
@@ -1391,6 +1404,11 @@ export class BaseProvider extends Provider implements EnsProvider {
         return this.formatter.transactionRequest(await resolveProperties(tx));
     }
 
+    _getStateOverride(state: StateOverride) {
+        if (state == null) return {}
+        return this.formatter.stateOverride(state)
+    }
+
     async _getFilter(filter: Filter | FilterByBlockHash | Promise<Filter | FilterByBlockHash>): Promise<Filter | FilterByBlockHash> {
         filter = await filter;
 
@@ -1423,7 +1441,8 @@ export class BaseProvider extends Provider implements EnsProvider {
         await this.getNetwork();
         const params = await resolveProperties({
             transaction: this._getTransactionRequest(transaction),
-            blockTag: this._getBlockTag(blockTag)
+            blockTag: this._getBlockTag(blockTag),
+            stateOverride: this._stateOverride
         });
 
         const result = await this.perform("call", params);
@@ -1440,7 +1459,8 @@ export class BaseProvider extends Provider implements EnsProvider {
     async estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber> {
         await this.getNetwork();
         const params = await resolveProperties({
-            transaction: this._getTransactionRequest(transaction)
+            transaction: this._getTransactionRequest(transaction),
+            stateOverride: this._stateOverride
         });
 
         const result = await this.perform("estimateGas", params);
@@ -1452,6 +1472,18 @@ export class BaseProvider extends Provider implements EnsProvider {
                 params, result, error
             });
         }
+    }
+
+    setStateOverride(value: StateOverride = null) {
+        if (value === null) {
+            this._stateOverride = null
+            return
+        }
+        this._stateOverride = this.formatter.stateOverride(value)
+    }
+
+    getStateOverride(): StateOverride {
+        return this._stateOverride
     }
 
     async _getAddress(addressOrName: string | Promise<string>): Promise<string> {
@@ -1657,7 +1689,6 @@ export class BaseProvider extends Provider implements EnsProvider {
 
         return this.formatter.blockTag(blockTag);
     }
-
 
     async getResolver(name: string): Promise<null | Resolver> {
         try {

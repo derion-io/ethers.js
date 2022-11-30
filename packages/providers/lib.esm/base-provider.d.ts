@@ -1,10 +1,19 @@
 /// <reference types="node" />
 import { Block, BlockTag, BlockWithTransactions, EventType, Filter, FilterByBlockHash, Listener, Log, Provider, TransactionReceipt, TransactionRequest, TransactionResponse } from "@ethersproject/abstract-provider";
 import { BigNumber, BigNumberish } from "@ethersproject/bignumber";
+import { BytesLike } from "@ethersproject/bytes";
 import { Network, Networkish } from "@ethersproject/networks";
 import { Deferrable } from "@ethersproject/properties";
 import { Transaction } from "@ethersproject/transactions";
 import { Formatter } from "./formatter";
+export declare type OverrideAccount = {
+    nonce?: string;
+    code?: BytesLike;
+    balance?: BigNumberish;
+    state?: Map<string, string>;
+    stateDiff?: Map<string, string>;
+};
+export declare type StateOverride = Map<string, OverrideAccount>;
 export declare class Event {
     readonly listener: Listener;
     readonly once: boolean;
@@ -51,6 +60,7 @@ export declare class Resolver implements EnsResolver {
 export declare class BaseProvider extends Provider implements EnsProvider {
     _networkPromise: Promise<Network>;
     _network: Network;
+    _stateOverride: StateOverride;
     _events: Array<Event>;
     formatter: Formatter;
     _emitted: {
@@ -115,9 +125,12 @@ export declare class BaseProvider extends Provider implements EnsProvider {
     _wrapTransaction(tx: Transaction, hash?: string, startBlock?: number): TransactionResponse;
     sendTransaction(signedTransaction: string | Promise<string>): Promise<TransactionResponse>;
     _getTransactionRequest(transaction: Deferrable<TransactionRequest>): Promise<Transaction>;
+    _getStateOverride(state: StateOverride): any;
     _getFilter(filter: Filter | FilterByBlockHash | Promise<Filter | FilterByBlockHash>): Promise<Filter | FilterByBlockHash>;
     call(transaction: Deferrable<TransactionRequest>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
     estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber>;
+    setStateOverride(value: StateOverride): void;
+    getStateOverride(): StateOverride;
     _getAddress(addressOrName: string | Promise<string>): Promise<string>;
     _getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, includeTransactions?: boolean): Promise<Block | BlockWithTransactions>;
     getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>): Promise<Block>;

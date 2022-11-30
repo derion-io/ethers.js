@@ -20300,6 +20300,14 @@
 	        var hex = this.hex.bind(this);
 	        var number = this.number.bind(this);
 	        var type = this.type.bind(this);
+	        var mapHashHash = Formatter.mapOf(hash, hash);
+	        var overrideAccount = {
+	            nonce: Formatter.allowNull(number),
+	            code: Formatter.allowNull(hex),
+	            balance: Formatter.allowNull(bigNumber),
+	            state: Formatter.allowNull(mapHashHash),
+	            stateDiff: Formatter.allowNull(mapHashHash),
+	        };
 	        var strictData = function (v) { return _this.data(v, true); };
 	        formats.transaction = {
 	            hash: hash,
@@ -20339,6 +20347,7 @@
 	            type: Formatter.allowNull(number),
 	            accessList: Formatter.allowNull(this.accessList.bind(this), null),
 	        };
+	        formats.stateOverride = Formatter.mapOf(address, overrideAccount);
 	        formats.receiptLog = {
 	            transactionIndex: number,
 	            blockNumber: number,
@@ -20542,6 +20551,9 @@
 	    Formatter.prototype.transactionRequest = function (value) {
 	        return Formatter.check(this.formats.transactionRequest, value);
 	    };
+	    Formatter.prototype.stateOverride = function (value) {
+	        return this.formats.stateOverride(value);
+	    };
 	    Formatter.prototype.transactionResponse = function (transaction) {
 	        // Rename gas to gasLimit
 	        if (transaction.gas != null && transaction.gasLimit == null) {
@@ -20696,6 +20708,34 @@
 	            });
 	            return result;
 	        });
+	    };
+	    Formatter.mapOf = function (formatKey, formatValue) {
+	        return function (map) {
+	            if (typeof (map) !== 'object' || map === null) {
+	                throw new Error('expect an object');
+	            }
+	            var result = {};
+	            for (var _i = 0, _a = Object.keys(map); _i < _a.length; _i++) {
+	                var key = _a[_i];
+	                var validKey = formatKey(key);
+	                if (validKey === null) {
+	                    return null;
+	                }
+	                var validValue = Formatter.format(map[key], formatValue);
+	                if (validValue === null) {
+	                    return null;
+	                }
+	                result[validKey] = validValue;
+	            }
+	            return result;
+	        };
+	    };
+	    Formatter.format = function (value, format) {
+	        switch (typeof (format)) {
+	            case 'function': return format(value);
+	            case 'object': return Formatter.check(format, value);
+	            default: throw new Error('expect FormatFunc or FormatFuncs');
+	        }
 	    };
 	    return Formatter;
 	}());
@@ -21369,6 +21409,7 @@
 	        // Events being listened to
 	        _this._events = [];
 	        _this._emitted = { block: -2 };
+	        _this._stateOverride = null;
 	        _this.formatter = _newTarget.getFormatter();
 	        // If network is any, this Provider allows the underlying
 	        // network to change dynamically, and we auto-detect the
@@ -22316,6 +22357,9 @@
 	            });
 	        });
 	    };
+	    BaseProvider.prototype._getStateOverride = function (state) {
+	        return this.formatter.stateOverride(state);
+	    };
 	    BaseProvider.prototype._getFilter = function (filter) {
 	        return __awaiter(this, void 0, void 0, function () {
 	            var result, _a, _b;
@@ -22363,7 +22407,8 @@
 	                        _a.sent();
 	                        return [4 /*yield*/, (0, lib$3.resolveProperties)({
 	                                transaction: this._getTransactionRequest(transaction),
-	                                blockTag: this._getBlockTag(blockTag)
+	                                blockTag: this._getBlockTag(blockTag),
+	                                stateOverride: this._getStateOverride(this._stateOverride)
 	                            })];
 	                    case 2:
 	                        params = _a.sent();
@@ -22417,6 +22462,12 @@
 	                }
 	            });
 	        });
+	    };
+	    BaseProvider.prototype.setStateOverride = function (value) {
+	        this._stateOverride = value;
+	    };
+	    BaseProvider.prototype.getStateOverride = function () {
+	        return this._stateOverride;
 	    };
 	    BaseProvider.prototype._getAddress = function (addressOrName) {
 	        return __awaiter(this, void 0, void 0, function () {
@@ -23614,7 +23665,14 @@
 	                return ["eth_getTransactionReceipt", [params.transactionHash]];
 	            case "call": {
 	                var hexlifyTransaction = (0, lib$3.getStatic)(this.constructor, "hexlifyTransaction");
-	                return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+	                return [
+	                    "eth_call",
+	                    [
+	                        hexlifyTransaction(params.transaction, { from: true }),
+	                        params.blockTag,
+	                        params.stateOverride
+	                    ]
+	                ];
 	            }
 	            case "estimateGas": {
 	                var hexlifyTransaction = (0, lib$3.getStatic)(this.constructor, "hexlifyTransaction");

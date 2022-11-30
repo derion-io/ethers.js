@@ -28,6 +28,14 @@ var Formatter = /** @class */ (function () {
         var hex = this.hex.bind(this);
         var number = this.number.bind(this);
         var type = this.type.bind(this);
+        var mapHashHash = Formatter.mapOf(hash, hash);
+        var overrideAccount = {
+            nonce: Formatter.allowNull(number, null),
+            code: Formatter.allowNull(hex, null),
+            balance: Formatter.allowNull(bigNumber, null),
+            state: Formatter.allowNull(mapHashHash, null),
+            stateDiff: Formatter.allowNull(mapHashHash, null),
+        };
         var strictData = function (v) { return _this.data(v, true); };
         formats.transaction = {
             hash: hash,
@@ -67,6 +75,7 @@ var Formatter = /** @class */ (function () {
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
+        formats.stateOverride = Formatter.mapOf(address, overrideAccount);
         formats.receiptLog = {
             transactionIndex: number,
             blockNumber: number,
@@ -270,6 +279,9 @@ var Formatter = /** @class */ (function () {
     Formatter.prototype.transactionRequest = function (value) {
         return Formatter.check(this.formats.transactionRequest, value);
     };
+    Formatter.prototype.stateOverride = function (value) {
+        return this.formats.stateOverride(value);
+    };
     Formatter.prototype.transactionResponse = function (transaction) {
         // Rename gas to gasLimit
         if (transaction.gas != null && transaction.gasLimit == null) {
@@ -424,6 +436,34 @@ var Formatter = /** @class */ (function () {
             });
             return result;
         });
+    };
+    Formatter.mapOf = function (formatKey, formatValue) {
+        return function (map) {
+            if (typeof (map) !== 'object' || map === null) {
+                throw new Error('expect an object');
+            }
+            var result = {};
+            for (var _i = 0, _a = Object.keys(map); _i < _a.length; _i++) {
+                var key = _a[_i];
+                var validKey = formatKey(key);
+                if (validKey === null) {
+                    return null;
+                }
+                var validValue = Formatter.format(map[key], formatValue);
+                if (validValue === null) {
+                    return null;
+                }
+                result[validKey] = validValue;
+            }
+            return result;
+        };
+    };
+    Formatter.format = function (value, format) {
+        switch (typeof (format)) {
+            case 'function': return format(value);
+            case 'object': return Formatter.check(format, value);
+            default: throw new Error('expect FormatFunc or FormatFuncs');
+        }
     };
     return Formatter;
 }());
