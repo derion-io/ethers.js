@@ -1442,7 +1442,7 @@ export class BaseProvider extends Provider implements EnsProvider {
         const params = await resolveProperties({
             transaction: this._getTransactionRequest(transaction),
             blockTag: this._getBlockTag(blockTag),
-            stateOverride: this._stateOverride
+            stateOverride: this._getStateOverride(this._stateOverride)
         });
 
         const result = await this.perform("call", params);
@@ -1460,7 +1460,7 @@ export class BaseProvider extends Provider implements EnsProvider {
         await this.getNetwork();
         const params = await resolveProperties({
             transaction: this._getTransactionRequest(transaction),
-            stateOverride: this._stateOverride
+            stateOverride: this._getStateOverride(this._stateOverride)
         });
 
         const result = await this.perform("estimateGas", params);

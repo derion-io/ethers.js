@@ -28,7 +28,7 @@ export class Formatter {
         const overrideAccount = {
             nonce: Formatter.allowNull(number),
             code: Formatter.allowNull(hex),
-            balance: Formatter.allowNull(bigNumber),
+            balance: Formatter.allowNull(value => BigNumber.from(value).toHexString(), null),
             state: Formatter.allowNull(mapHashHash),
             stateDiff: Formatter.allowNull(mapHashHash),
         };

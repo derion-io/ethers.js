@@ -1299,7 +1299,8 @@ export class BaseProvider extends Provider {
         return __awaiter(this, void 0, void 0, function* () {
             yield this.getNetwork();
             const params = yield resolveProperties({
-                transaction: this._getTransactionRequest(transaction)
+                transaction: this._getTransactionRequest(transaction),
+                stateOverride: this._getStateOverride(this._stateOverride)
             });
             const result = yield this.perform("estimateGas", params);
             try {

@@ -1632,7 +1632,7 @@ var BaseProvider = /** @class */ (function (_super) {
                         return [4 /*yield*/, (0, properties_1.resolveProperties)({
                                 transaction: this._getTransactionRequest(transaction),
                                 blockTag: this._getBlockTag(blockTag),
-                                stateOverride: this._stateOverride
+                                stateOverride: this._getStateOverride(this._stateOverride)
                             })];
                     case 2:
                         params = _a.sent();
@@ -1665,7 +1665,7 @@ var BaseProvider = /** @class */ (function (_super) {
                         _a.sent();
                         return [4 /*yield*/, (0, properties_1.resolveProperties)({
                                 transaction: this._getTransactionRequest(transaction),
-                                stateOverride: this._stateOverride
+                                stateOverride: this._getStateOverride(this._stateOverride)
                             })];
                     case 2:
                         params = _a.sent();

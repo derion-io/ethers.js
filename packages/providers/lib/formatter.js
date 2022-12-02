@@ -32,7 +32,7 @@ var Formatter = /** @class */ (function () {
         var overrideAccount = {
             nonce: Formatter.allowNull(number, null),
             code: Formatter.allowNull(hex, null),
-            balance: Formatter.allowNull(bigNumber, null),
+            balance: Formatter.allowNull(value => bignumber_1.BigNumber.from(value).toHexString(), null),
             state: Formatter.allowNull(mapHashHash, null),
             stateDiff: Formatter.allowNull(mapHashHash, null),
         };
