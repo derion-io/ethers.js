@@ -17,7 +17,7 @@ import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-import { BaseProvider, Event, StateOverride, OverrideAccount } from "./base-provider";
+import { BaseProvider, Event, StateOverride, AccountOverride } from "./base-provider";
 
 
 const errorGas = [ "call", "estimateGas" ];
@@ -682,7 +682,7 @@ export class JsonRpcProvider extends BaseProvider {
         return result
     }
 
-    static hexlifyOverrideAccount(account: OverrideAccount): any {
+    static hexlifyOverrideAccount(account: AccountOverride): any {
         let result: any = {};
         ['nonce', 'balance'].forEach(key => {
             if ((<any>account)[key] === null) {return}

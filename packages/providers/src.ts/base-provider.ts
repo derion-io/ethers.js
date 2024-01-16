@@ -24,7 +24,7 @@ const logger = new Logger(version);
 
 import { Formatter } from "./formatter";
 
-export type OverrideAccount = {
+export type AccountOverride = {
     nonce?: string
     code?: BytesLike
     balance?: BigNumberish
@@ -33,7 +33,7 @@ export type OverrideAccount = {
 }
 
 // key is heximal 20 bytes
-export type StateOverride = {[key: string]: StateOverride}
+export type StateOverride = {[account: string]: AccountOverride}
 
 //////////////////////////////
 // Event Serializeing

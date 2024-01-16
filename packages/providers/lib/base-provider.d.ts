@@ -6,7 +6,7 @@ import { Network, Networkish } from "@ethersproject/networks";
 import { Deferrable } from "@ethersproject/properties";
 import { Transaction } from "@ethersproject/transactions";
 import { Formatter } from "./formatter";
-export declare type OverrideAccount = {
+export declare type AccountOverride = {
     nonce?: string;
     code?: BytesLike;
     balance?: BigNumberish;
@@ -18,7 +18,7 @@ export declare type OverrideAccount = {
     };
 };
 export declare type StateOverride = {
-    [key: string]: StateOverride;
+    [account: string]: AccountOverride;
 };
 export declare class Event {
     readonly listener: Listener;
