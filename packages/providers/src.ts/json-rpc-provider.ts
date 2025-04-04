@@ -17,7 +17,7 @@ import { Logger } from "@ethersproject/logger";
 import { version } from "./_version";
 const logger = new Logger(version);
 
-import { BaseProvider, Event } from "./base-provider";
+import { BaseProvider, Event, StateOverride, AccountOverride } from "./base-provider";
 
 
 const errorGas = [ "call", "estimateGas" ];
@@ -591,7 +591,17 @@ export class JsonRpcProvider extends BaseProvider {
 
             case "call": {
                 const hexlifyTransaction = getStatic<(t: TransactionRequest, a?: { [key: string]: boolean }) => { [key: string]: string }>(this.constructor, "hexlifyTransaction");
-                return [ "eth_call", [ hexlifyTransaction(params.transaction, { from: true }), params.blockTag ] ];
+                if (!params.stateOverride) {
+                    return ["eth_call", [hexlifyTransaction(params.transaction, { from: true }), params.blockTag]];
+                }
+                return [
+                    "eth_call",
+                    [
+                        hexlifyTransaction(params.transaction, { from: true }),
+                        params.blockTag,
+                        JsonRpcProvider.hexlifyStateOverride(params.stateOverride)
+                    ]
+                ];
             }
 
             case "estimateGas": {
@@ -742,5 +752,30 @@ export class JsonRpcProvider extends BaseProvider {
         }
 
         return result;
+    }
+
+    static hexlifyStateOverride(state: StateOverride): any {
+        let result: any = {}
+        for (let address of Object.keys(state)) {
+            result[address] = JsonRpcProvider.hexlifyOverrideAccount(state[address])
+        }
+        return result
+    }
+
+    static hexlifyOverrideAccount(account: AccountOverride): any {
+        let result: any = {};
+        ['nonce', 'balance'].forEach(key => {
+            if ((<any>account)[key] === null) {return}
+            result[key] = hexValue((<any>account)[key])
+        });
+        ['code'].forEach(key => {
+            if ((<any>account)[key] === null) {return}
+            result[key] = hexlify((<any>account)[key])
+        });
+        ['state', 'stateDiff'].forEach(key => {
+            if ((<any>account)[key] === null) {return}
+            result[key] = (<any>account)[key]
+        });
+        return result
     }
 }

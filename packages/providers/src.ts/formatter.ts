@@ -25,6 +25,7 @@ export type Formats = {
     blockWithTransactions: FormatFuncs,
     filter: FormatFuncs,
     filterLog: FormatFuncs,
+    stateOverride: FormatFunc
 };
 
 export class Formatter {
@@ -46,6 +47,14 @@ export class Formatter {
         const hex = this.hex.bind(this);
         const number = this.number.bind(this);
         const type = this.type.bind(this);
+        const mapHashHash = Formatter.mapOf(hash, hash)
+        const overrideAccount = {
+            nonce: Formatter.allowNull(number, null),
+            code: Formatter.allowNull(hex, null),
+            balance: Formatter.allowNull(value => BigNumber.from(value).toHexString(), null),
+            state: Formatter.allowNull(mapHashHash, null),
+            stateDiff: Formatter.allowNull(mapHashHash, null),
+        }
 
         const strictData = (v: any) => { return this.data(v, true); };
 
@@ -97,6 +106,8 @@ export class Formatter {
             type: Formatter.allowNull(number),
             accessList: Formatter.allowNull(this.accessList.bind(this), null),
         };
+
+        formats.stateOverride = Formatter.mapOf(address, overrideAccount)
 
         formats.receiptLog = {
             transactionIndex: number,
@@ -324,6 +335,10 @@ export class Formatter {
         return Formatter.check(this.formats.transactionRequest, value);
     }
 
+    stateOverride(value: any): any {
+        return this.formats.stateOverride(value)
+    }
+
     transactionResponse(transaction: any): TransactionResponse {
 
         // Rename gas to gasLimit
@@ -495,6 +510,35 @@ export class Formatter {
 
             return result;
         });
+    }
+
+    static mapOf(formatKey: FormatFunc, formatValue: FormatFunc | FormatFuncs): FormatFunc {
+        return function(map: any): object {
+            if (typeof(map) !== 'object' || map === null) {
+                throw new Error('expect an object')
+            }
+            let result: any = {}
+            for (let key of Object.keys(map)) {
+                let validKey = formatKey(key)
+                if (validKey === null) {
+                    return null
+                }
+                let validValue = Formatter.format(map[key], formatValue)
+                if (validValue === null) {
+                    return null
+                }
+                result[validKey] = validValue
+            }
+            return result
+        }
+    }
+
+    static format(value: any, format: FormatFunc | FormatFuncs): any {
+        switch (typeof(format)) {
+            case 'function': return format(value)
+            case 'object': return Formatter.check(format, value)
+            default: throw new Error('expect FormatFunc or FormatFuncs')
+        }
     }
 }
 

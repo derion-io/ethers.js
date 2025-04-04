@@ -27,6 +27,17 @@ import { Formatter } from "./formatter";
 
 const MAX_CCIP_REDIRECTS = 10;
 
+export type AccountOverride = {
+    nonce?: string
+    code?: BytesLike
+    balance?: BigNumberish
+    state?: {[key: string]: string}         // key and value is heximal 32 bytes
+    stateDiff?: {[key: string]: string}     // key and value is heximal 32 bytes
+}
+
+// key is heximal 20 bytes
+export type StateOverride = {[account: string]: AccountOverride}
+
 //////////////////////////////
 // Event Serializeing
 
@@ -702,6 +713,7 @@ let nextPollId = 1;
 export class BaseProvider extends Provider implements EnsProvider {
     _networkPromise: Promise<Network>;
     _network: Network;
+    _stateOverride: StateOverride
 
     _events: Array<Event>;
 
@@ -755,6 +767,7 @@ export class BaseProvider extends Provider implements EnsProvider {
         this._events = [];
 
         this._emitted = { block: -2 };
+        this._stateOverride = null
 
         this.disableCcipRead = false;
 
@@ -1606,6 +1619,11 @@ export class BaseProvider extends Provider implements EnsProvider {
         return this.formatter.transactionRequest(await resolveProperties(tx));
     }
 
+    _getStateOverride(state: StateOverride) {
+        if (state == null) return {}
+        return this.formatter.stateOverride(state)
+    }
+
     async _getFilter(filter: Filter | FilterByBlockHash | Promise<Filter | FilterByBlockHash>): Promise<Filter | FilterByBlockHash> {
         filter = await filter;
 
@@ -1643,7 +1661,9 @@ export class BaseProvider extends Provider implements EnsProvider {
 
         const txSender = transaction.to;
 
-        const result = await this.perform("call", { transaction, blockTag });
+        const stateOverride = this._getStateOverride(this._stateOverride)
+
+        const result = await this.perform("call", { transaction, blockTag, stateOverride });
 
         // CCIP Read request via OffchainLookup(address,string[],bytes,bytes4,bytes)
         if (attempt >= 0 && blockTag === "latest" && txSender != null && result.substring(0, 10) === "0x556f1830" && (hexDataLength(result) % 32 === 4)) {
@@ -1738,6 +1758,7 @@ export class BaseProvider extends Provider implements EnsProvider {
     async estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber> {
         await this.getNetwork();
         const params = await resolveProperties({
+            stateOverride: this._getStateOverride(this._stateOverride),
             transaction: this._getTransactionRequest(transaction)
         });
 
@@ -1750,6 +1771,18 @@ export class BaseProvider extends Provider implements EnsProvider {
                 params, result, error
             });
         }
+    }
+
+    setStateOverride(value: StateOverride = null) {
+        if (value === null) {
+            this._stateOverride = null
+            return
+        }
+        this._stateOverride = this.formatter.stateOverride(value)
+    }
+
+    getStateOverride(): StateOverride {
+        return this._stateOverride
     }
 
     async _getAddress(addressOrName: string | Promise<string>): Promise<string> {
