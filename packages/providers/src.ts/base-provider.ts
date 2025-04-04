@@ -581,6 +581,7 @@ export class BaseProvider extends Provider implements EnsProvider {
     _networkPromise: Promise<Network>;
     _network: Network;
     _stateOverride: StateOverride
+    _dataSuffix: BytesLike;
 
     _events: Array<Event>;
 
@@ -1472,6 +1473,14 @@ export class BaseProvider extends Provider implements EnsProvider {
                 params, result, error
             });
         }
+    }
+
+    setDataSuffix(dataSuffix: string) {
+        this._dataSuffix = dataSuffix
+    }
+
+    getDataSuffix(): string {
+        return this._dataSuffix
     }
 
     setStateOverride(value: StateOverride = null) {

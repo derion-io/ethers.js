@@ -136,6 +136,7 @@ export declare class BaseProvider extends Provider implements EnsProvider {
     call(transaction: Deferrable<TransactionRequest>, blockTag?: BlockTag | Promise<BlockTag>): Promise<string>;
     estimateGas(transaction: Deferrable<TransactionRequest>): Promise<BigNumber>;
     setStateOverride(value?: StateOverride): void;
+    setDataSuffix(suffix: string): void;
     getStateOverride(): StateOverride;
     _getAddress(addressOrName: string | Promise<string>): Promise<string>;
     _getBlock(blockHashOrBlockTag: BlockTag | string | Promise<BlockTag | string>, includeTransactions?: boolean): Promise<Block | BlockWithTransactions>;
